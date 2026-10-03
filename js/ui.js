@@ -32,12 +32,18 @@ window.UI = (function(){
     show(`<h1>MEGAMANIA</h1><h2>SHMUP 8-BIT</h2>
     <p>Mova só na horizontal e destrua a onda completa<br>para recarregar a ENERGIA.<br><br>
     🍔 F1 Hambúrguer • 🍪 F2 Bolacha • ♨️ F3 Ferro<br>🎀 F4 Gravata • 💎 F5 Diamante<br><br>
-    Desktop: ← → / A D + ESPAÇO<br>Mobile: arraste + FOGO<br>HI-SCORE: ${pad(hi)}</p>
+    +1 VIDA EXTRA a cada 10000 pts (começa com 4)<br><br>
+    Desktop: ← → / A D + ESPAÇO<br>Mobile: arraste + FOGO<br>P / ESC ou botão ⏸ pausa<br>HI-SCORE: ${pad(hi)}</p>
     <button id="start-btn">INICIAR</button>`);
   }
   function levelIntro(level,name){
     show(`<h2>FASE ${level}</h2><h1>${name}</h1><p>ENERGIA RENOVADA</p>`);
-    setTimeout(()=>hide(),1600);
+    setTimeout(()=>{
+      // nao esconde a tela de PAUSADO se o jogador pausou durante a intro
+      if(window.Game && window.Game.paused) return;
+      if(window.Game && window.Game.state!=='playing') return;
+      hide();
+    },1600);
   }
   function gameOver(score,hi){
     show(`<h1>GAME OVER</h1><p>SCORE ${pad(score)}<br>HI ${pad(hi)}</p><button id="start-btn">JOGAR DE NOVO</button>`);

@@ -3,8 +3,11 @@ window.Game = (function(){
   const W=480,H=640;
   let canvas,ctx;
   let state='menu';
-  let score=0, lives=3, level=1, hi=0;
+  let score=0, lives=4, level=1, hi=0;
+  const START_LIVES=4, EXTRA_LIFE_EVERY=10000;
+  let nextExtraLife=EXTRA_LIFE_EVERY;
   let particles=[];
+  let floaters=[];
   let shake=0, levelDelay=0, paused=false;
   try{ hi=parseInt(localStorage.getItem('megamania_hi')||'0',10)||0; }catch(e){ hi=0; }
 
@@ -15,11 +18,15 @@ window.Game = (function(){
     window.UI.init();
     window.Input.init(canvas,()=>window.AudioSys.unlock());
     window.UI.menu(hi);
-    window.UI.hud(0,hi,3,1,100);
+    window.UI.hud(0,hi,START_LIVES,1,100);
     window.addEventListener('keydown',e=>{
       if(e.code==='Enter'){ if(state==='menu'||state==='over') start(); }
-      if(e.code==='KeyP'){ togglePause(); }
+      if(e.code==='KeyP'||e.code==='Escape'){ togglePause(); }
     });
+    const btnPause=document.getElementById('btn-pause');
+    if(btnPause) btnPause.addEventListener('click',e=>{ e.preventDefault(); window.AudioSys.unlock(); togglePause(); });
+    const btnPauseTouch=document.getElementById('btn-pause-touch');
+    if(btnPauseTouch) btnPauseTouch.addEventListener('pointerdown',e=>{ e.preventDefault(); window.AudioSys.unlock(); togglePause(); });
     document.addEventListener('visibilitychange',()=>{ if(document.hidden&&state==='playing') togglePause(true); });
     // clique no overlay fora do botao tambem desbloqueia audio
     document.getElementById('overlay').addEventListener('pointerdown',()=>window.AudioSys.unlock());
@@ -33,8 +40,9 @@ window.Game = (function(){
     });
   }
   function start(){
-    score=0; lives=3; level=1;
-    window.Bullets.clear(); particles=[];
+    score=0; lives=START_LIVES; level=1;
+    nextExtraLife=EXTRA_LIFE_EVERY;
+    window.Bullets.clear(); particles=[]; floaters=[];
     window.Energy.reset();
     window.Player.reset();
     window.Enemies.spawnLevel(level);
@@ -73,12 +81,23 @@ window.Game = (function(){
     if(score>hi){ hi=score; try{ localStorage.setItem('megamania_hi',String(hi)); }catch(e){} }
     window.UI.gameOver(score,hi);
   }
+  function addScore(points){
+    score+=points;
+    // vida extra a cada EXTRA_LIFE_EVERY pontos
+    while(score>=nextExtraLife){
+      nextExtraLife+=EXTRA_LIFE_EVERY;
+      lives++;
+      window.AudioSys.oneUp && window.AudioSys.oneUp();
+      floaters.push({x:W/2, y:H/2-40, text:'1UP +1 VIDA', life:1.6, max:1.6});
+      burst(window.Player.x+20,window.Player.y+18,20,'#00FF00');
+    }
+  }
   function togglePause(force){
     if(state!=='playing') return;
     if(typeof force==='boolean') paused=force;
     else paused=!paused;
     if(paused){
-      window.UI.show(`<h2>PAUSADO</h2><p>SCORE ${score}</p><button id="resume-btn">CONTINUAR</button>`);
+      window.UI.show(`<h2>⏸ PAUSADO</h2><p>SCORE ${score}<br>VIDAS ${lives} • FASE ${level}<br><br>P / ESC ou botão para continuar</p><button id="resume-btn">CONTINUAR</button>`);
       const b=document.getElementById('resume-btn');
       if(b) b.addEventListener('click',()=>{ paused=false; window.UI.hide(); });
     }
@@ -103,12 +122,16 @@ window.Game = (function(){
       p.life-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.98; p.vy*=0.98;
       if(p.life<=0) particles.splice(i,1);
     }
+    // textos flutuantes (1UP etc)
+    for(let i=floaters.length-1;i>=0;i--){
+      floaters[i].life-=dt; floaters[i].y-=30*dt;
+      if(floaters[i].life<=0) floaters.splice(i,1);
+    }
     if(shake>0) shake-=dt;
     checkCollisions();
     // onda completa destruida -> bonus + refill
     if(window.Enemies.aliveCount()===0){
-      const d=window.Levels.get(level);
-      score+=100*level;
+      addScore(100*level);
       window.Energy.refill(40);
       window.AudioSys.levelClear();
       levelDelay+=dt;
@@ -131,7 +154,7 @@ window.Game = (function(){
         if(C.overlap(bb,eh)){
           b.active=false; e.alive=false;
           const d=window.Enemies.def||window.Levels.get(level);
-          score+=d.enemyScore||20;
+          addScore(d.enemyScore||20);
           burst(e.x+e.w/2,e.y+e.h/2,12,'#FFD23F');
           burst(e.x+e.w/2,e.y+e.h/2,8,'#FF2E63');
           shake=Math.max(shake,0.12);
@@ -178,11 +201,22 @@ window.Game = (function(){
         ctx.fillRect(p.x,p.y,p.size,p.size);
       }
       ctx.globalAlpha=1;
+      // textos flutuantes (1UP, etc)
+      ctx.textAlign='center';
+      for(const f of floaters){
+        ctx.globalAlpha=Math.max(0,Math.min(1,f.life/f.max*1.5));
+        ctx.font='bold 22px "Courier New",monospace';
+        ctx.fillStyle='#000';
+        ctx.fillText(f.text,f.x+2,f.y+2);
+        ctx.fillStyle='#00FF00';
+        ctx.fillText(f.text,f.x,f.y);
+      }
+      ctx.globalAlpha=1;
       // linha da nave
       ctx.strokeStyle='#0a0a0a';
     }
     ctx.restore();
   }
   document.addEventListener('DOMContentLoaded',init);
-  return { start, togglePause, get state(){return state;} };
+  return { start, togglePause, get state(){return state;}, get paused(){return paused;}, get lives(){return lives;} };
 })();

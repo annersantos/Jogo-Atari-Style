@@ -4,6 +4,8 @@ body { display:flex; align-items:center; justify-content:center; }
 #cabinet { display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; max-width:520px; padding:8px; }
 #top-hud { width:100%; display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:bold; letter-spacing:1px; color:#FFE135; text-shadow:0 0 6px #ff0; padding:4px 8px; border:2px solid #222; background:#050505; }
 #top-hud span { color:#fff; }
+#btn-pause { margin-left:8px; font-size:14px; font-weight:bold; padding:2px 8px; background:#111; color:#FFE135; border:2px solid #FFE135; border-radius:6px; cursor:pointer; vertical-align:middle; }
+#btn-pause:active { background:#FFE135; color:#000; }
 .hud-center { color:#00E5FF !important; }
 #screen-wrap { position:relative; width:min(96vw, 480px); aspect-ratio:3/4; background:#000; border:3px solid #333; box-shadow:0 0 20px #0ff2, inset 0 0 60px #000; }
 #game { width:100%; height:100%; display:block; background:#000; image-rendering:pixelated; image-rendering:crisp-edges; touch-action:none; }
@@ -27,5 +29,7 @@ body { display:flex; align-items:center; justify-content:center; }
 #touch button:active { background:#0f0; color:#000; }
 #btn-fire { background:#330000 !important; color:#ff4444 !important; border-color:#ff4444 !important; }
 #btn-fire:active { background:#f00 !important; color:#fff !important; }
+#btn-pause-touch { flex:0 0 56px !important; background:#222 !important; color:#FFE135 !important; border-color:#FFE135 !important; font-size:18px !important; }
+#btn-pause-touch:active { background:#FFE135 !important; color:#000 !important; }
 #hint { font-size:11px; color:#555; text-align:center; }
 @media (pointer:coarse) { #touch { display:flex; } #hint { display:none; } #top-hud { font-size:12px; } }

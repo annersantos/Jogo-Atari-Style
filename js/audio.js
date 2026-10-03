@@ -89,7 +89,18 @@ window.AudioSys = (function(){
       o.start(t0); o.stop(t0+0.11);
     });
   }
+  function oneUp(){
+    if(muted||!ensure()) return;
+    [523,659,784,1047,1319].forEach((fr,i)=>{
+      const t0=ctx.currentTime+i*0.09;
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='square'; o.frequency.value=fr;
+      env(g,t0,0.005,0.4,0.09);
+      o.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0+0.1);
+    });
+  }
   function toggleMute(){ muted=!muted; return muted; }
   function unlock(){ ensure(); }
-  return { laser, explosion, playerDown, levelClear, toggleMute, unlock };
+  return { laser, explosion, playerDown, levelClear, oneUp, toggleMute, unlock };
 })();
