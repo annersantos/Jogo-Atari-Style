@@ -4,8 +4,7 @@ window.Game = (function(){
   let canvas,ctx;
   let state='menu';
   let score=0, lives=4, level=1, hi=0;
-  const START_LIVES=4, EXTRA_LIFE_EVERY=10000;
-  let nextExtraLife=EXTRA_LIFE_EVERY;
+  const START_LIVES=4, BONUS_LIFE_EVERY=5;
   let particles=[];
   let floaters=[];
   let shake=0, levelDelay=0, paused=false;
@@ -41,7 +40,6 @@ window.Game = (function(){
   }
   function start(){
     score=0; lives=START_LIVES; level=1;
-    nextExtraLife=EXTRA_LIFE_EVERY;
     window.Bullets.clear(); particles=[]; floaters=[];
     window.Energy.reset();
     window.Player.reset();
@@ -53,14 +51,23 @@ window.Game = (function(){
     window.AudioSys.levelClear();
   }
   function nextLevel(){
+    const completed=level;
     level++;
+    // vida bonus somente a cada 5 fases completas (5, 10, 15...)
+    let bonusLife = (completed%BONUS_LIFE_EVERY===0);
+    if(bonusLife){
+      lives++;
+      window.AudioSys.oneUp && window.AudioSys.oneUp();
+      floaters.push({x:W/2, y:H/2-60, text:'1UP +1 VIDA', life:2.2, max:2.2});
+      burst(W/2,H/2-40,20,'#00FF00');
+    }
     window.Energy.reset();
     window.Bullets.clear();
     window.Player.reset();
     window.Player.invuln=2;
     window.Enemies.spawnLevel(level);
     const d=window.Levels.get(level);
-    window.UI.levelIntro(level,d.name);
+    window.UI.levelIntro(level,d.name,bonusLife);
     window.AudioSys.levelClear();
   }
   function loseLife(reason){
@@ -83,14 +90,6 @@ window.Game = (function(){
   }
   function addScore(points){
     score+=points;
-    // vida extra a cada EXTRA_LIFE_EVERY pontos
-    while(score>=nextExtraLife){
-      nextExtraLife+=EXTRA_LIFE_EVERY;
-      lives++;
-      window.AudioSys.oneUp && window.AudioSys.oneUp();
-      floaters.push({x:W/2, y:H/2-40, text:'1UP +1 VIDA', life:1.6, max:1.6});
-      burst(window.Player.x+20,window.Player.y+18,20,'#00FF00');
-    }
   }
   function togglePause(force){
     if(state!=='playing') return;
